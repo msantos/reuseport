@@ -1,6 +1,6 @@
 all:
 	$(CC) -D_GNU_SOURCE -nostartfiles -shared -fpic \
-	 	-o reuseport.so reuseport.c -ldl
+	 	-o libreuseport.so libreuseport.c -ldl
 
 clean:
-	-@rm resuseport.so
+	-@rm libresuseport.so
