@@ -47,12 +47,14 @@ bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   int enable = 1;
   int oerrno = errno;
 
-  if (addr->sa_family == AF_INET || addr->sa_family == AF_INET6) {
-    errno = 0;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
-          &enable, sizeof(enable)) < 0)
-      (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
-    errno = oerrno;
+  switch (addr->sa_family) {
+    case AF_INET:
+    case AF_INET6:
+      errno = 0;
+      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
+            &enable, sizeof(enable)) < 0)
+        (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+      errno = oerrno;
   }
 
   return sys_bind(sockfd, addr, addrlen);
