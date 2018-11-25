@@ -25,6 +25,8 @@ make
 Using
 -----
 
+* netcat
+
 ~~~
 # run in a shell
 LD_PRELOAD=./reuseport.so nc -k -l 9090
@@ -34,6 +36,43 @@ LD_PRELOAD=./reuseport.so nc -k -l 9090
 
 # yet another shell
 X=0; while :; do X=$((X+1)); echo "test:$X" | nc localhost 9090; done
+~~~
+
+* erlang
+
+~~~ erlang
+$ LD_PRELOAD=./libreuseport.so erl
+
+1> {ok, L1} = gen_tcp:listen(5678, [binary, {packet,0}, {active,true}]).
+{ok,#Port<0.6>}
+
+2> {ok, L2} = gen_tcp:listen(5678, [binary, {packet,0}, {active,true}]).
+{ok,#Port<0.7>}
+
+3> Accept = fun Loop(L) -> {ok, S} = gen_tcp:accept(L), io:format("~p->~p~n", [{listen, L}, {socket, S}]), gen_tcp:close(S), Loop(L) end.
+#Fun<erl_eval.6.128620087>
+
+4> spawn(fun() -> Accept(L1) end).
+<0.86.0>
+5> spawn(fun() -> Accept(L2) end).
+<0.88.0>
+
+% run: nc -z 127.0.0.1 5678
+{listen,#Port<0.6>}->{socket,#Port<0.8>}
+{listen,#Port<0.6>}->{socket,#Port<0.9>}
+{listen,#Port<0.6>}->{socket,#Port<0.10>}
+{listen,#Port<0.7>}->{socket,#Port<0.11>}
+{listen,#Port<0.6>}->{socket,#Port<0.12>}
+{listen,#Port<0.7>}->{socket,#Port<0.13>}
+{listen,#Port<0.6>}->{socket,#Port<0.14>}
+{listen,#Port<0.6>}->{socket,#Port<0.15>}
+{listen,#Port<0.6>}->{socket,#Port<0.16>}
+{listen,#Port<0.6>}->{socket,#Port<0.17>}
+{listen,#Port<0.7>}->{socket,#Port<0.18>}
+{listen,#Port<0.6>}->{socket,#Port<0.19>}
+{listen,#Port<0.7>}->{socket,#Port<0.20>}
+{listen,#Port<0.7>}->{socket,#Port<0.21>}
+{listen,#Port<0.7>}->{socket,#Port<0.22>}
 ~~~
 
 See Also
