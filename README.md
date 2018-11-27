@@ -4,7 +4,9 @@ libreuseport
 libreuseport is a small library for socket load distribution (aka port
 sharding).
 
-The library works as a `LD_PRELOAD` wrapper around a few syscalls:
+The libraries work by using `LD_PRELOAD` to intercept a few syscalls
+and call setsockopt(2) with the `SO_REUSEPORT` option before the actual
+syscall is done:
 
 * `libreuseport.c`: intercepts calls to bind(2)
 
