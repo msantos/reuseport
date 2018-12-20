@@ -21,9 +21,11 @@
  * SOFTWARE.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <dlfcn.h>
 #include <errno.h>
 
@@ -42,18 +44,69 @@ _init(void)
 }
 
   int
+sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
+    socklen_t addrlen)
+{
+  struct in_addr in;
+  struct in6_addr in6;
+  int port;
+
+  if (portstr) {
+    port = atoi(portstr);
+    if (port < 0 || port >= UINT16_MAX)
+      return -1;
+    port = ntohs(port);
+  }
+
+  switch (addr->sa_family) {
+    case AF_INET:
+      if (portstr &&
+          (((struct sockaddr_in *)addr)->sin_port != port))
+        return -1;
+
+      if (ipstr &&
+          ((inet_pton(addr->sa_family, ipstr, &in) != 1) ||
+           ((struct sockaddr_in *)addr)->sin_addr.s_addr != in.s_addr))
+        return -1;
+
+      break;
+
+    case AF_INET6:
+      if (portstr &&
+          (((struct sockaddr_in6 *)addr)->sin6_port != port))
+        return -1;
+
+      if (ipstr &&
+          ((inet_pton(addr->sa_family, ipstr, &in6) != 1) ||
+           (!(IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6 *)addr)->sin6_addr,
+                                 &in6)))))
+        return -1;
+
+      break;
+
+    default:
+      return -1;
+  }
+
+  return 0;
+}
+
+  int
 bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
   int enable = 1;
   int oerrno = errno;
+  char *ip;
+  char *port;
 
-  switch (addr->sa_family) {
-    case AF_INET:
-    case AF_INET6:
-      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
-            &enable, sizeof(enable)) < 0)
-        (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
-      errno = oerrno;
+  ip = getenv("LIBREUSEPORT_ADDR");
+  port = getenv("LIBREUSEPORT_PORT");
+
+  if (sockcmp(ip, port, addr, addrlen) == 0) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
+          &enable, sizeof(enable)) < 0)
+      (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+    errno = oerrno;
   }
 
   return sys_bind(sockfd, addr, addrlen);
