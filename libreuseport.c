@@ -29,6 +29,12 @@
 #include <dlfcn.h>
 #include <errno.h>
 
+enum {
+  LIBREUSEPORT_REUSEPORT = 1,
+  LIBREUSEPORT_REUSEADDR = 2,
+  LIBREUSEPORT_MAX = 3,
+};
+
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
   void
@@ -98,14 +104,33 @@ bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   int oerrno = errno;
   char *ip;
   char *port;
+  char *ops;
+  int op = LIBREUSEPORT_REUSEPORT;
 
   ip = getenv("LIBREUSEPORT_ADDR");
   port = getenv("LIBREUSEPORT_PORT");
+  ops = getenv("LIBREUSEPORT_OP");
 
   if (sockcmp(ip, port, addr, addrlen) == 0) {
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
-          &enable, sizeof(enable)) < 0)
-      (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+
+    if (ops) {
+      op = atoi(ops);
+      if (op < LIBREUSEPORT_REUSEPORT || op >= LIBREUSEPORT_MAX)
+          op = LIBREUSEPORT_REUSEPORT;
+    }
+
+    if (!(op & LIBREUSEPORT_REUSEPORT)) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable,
+                    sizeof(enable)) < 0)
+            (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+    }
+
+    if (!(op & LIBREUSEPORT_REUSEADDR)) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable,
+                    sizeof(enable)) < 0)
+            (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
+    }
+
     errno = oerrno;
   }
 
