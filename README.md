@@ -20,6 +20,28 @@ Build
 make
 ~~~
 
+Environment Variables
+---------------------
+
+`LIBREUSEPORT_ADDR`
+: Set socket option only if the socket matches the specified IPv4 or
+  IPv6 address (default: any address).
+
+        LIBREUSEPORT_ADDR="127.0.0.1"
+
+`LIBREUSEPORT_PORT`
+: Set socket option only if the socket matches the specified port
+  (default: any port).
+
+        LIBREUSEPORT_ADDR="127.0.0.1"
+
+`LIBREUSEPORT_OP`
+: Options to set on matching socket (default: 1):
+
+        1 : set SO_REUSEPORT
+        2 : set SO_REUSEADDR
+        3 : set SO_REUSEPORT and SO_REUSEADDR
+
 Using
 -----
 
