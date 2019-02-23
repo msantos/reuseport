@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2018 Michael Santos
+ * Copyright (c) 2018-2019 Michael Santos
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,11 @@ enum {
   LIBREUSEPORT_MAX = 3,
 };
 
+void _init(void);
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int sockcmp(const char *ipstr, const char *portstr,
+        const struct sockaddr *addr, socklen_t addrlen);
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
   void
 _init(void)
@@ -67,24 +71,24 @@ sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
   switch (addr->sa_family) {
     case AF_INET:
       if (portstr &&
-          (((struct sockaddr_in *)addr)->sin_port != port))
+          (((const struct sockaddr_in *)addr)->sin_port != port))
         return -1;
 
       if (ipstr &&
           ((inet_pton(addr->sa_family, ipstr, &in) != 1) ||
-           ((struct sockaddr_in *)addr)->sin_addr.s_addr != in.s_addr))
+           ((const struct sockaddr_in *)addr)->sin_addr.s_addr != in.s_addr))
         return -1;
 
       break;
 
     case AF_INET6:
       if (portstr &&
-          (((struct sockaddr_in6 *)addr)->sin6_port != port))
+          (((const struct sockaddr_in6 *)addr)->sin6_port != port))
         return -1;
 
       if (ipstr &&
           ((inet_pton(addr->sa_family, ipstr, &in6) != 1) ||
-           (!(IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6 *)addr)->sin6_addr,
+           (!(IN6_ARE_ADDR_EQUAL(&((const struct sockaddr_in6 *)addr)->sin6_addr,
                                  &in6)))))
         return -1;
 
