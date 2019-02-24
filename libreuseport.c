@@ -9,8 +9,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,14 +20,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 enum {
   LIBREUSEPORT_REUSEPORT = 1,
@@ -37,13 +37,11 @@ enum {
 
 void _init(void);
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int sockcmp(const char *ipstr, const char *portstr,
-        const struct sockaddr *addr, socklen_t addrlen);
+int sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
+            socklen_t addrlen);
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
-  void
-_init(void)
-{
+void _init(void) {
   const char *err;
 
   sys_bind = dlsym(RTLD_NEXT, "bind");
@@ -53,10 +51,8 @@ _init(void)
     (void)fprintf(stderr, "reuseport:dlsym (bind):%s\n", err);
 }
 
-  int
-sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
-    socklen_t addrlen)
-{
+int sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
+            socklen_t addrlen) {
   struct in_addr in;
   struct in6_addr in6;
   int port;
@@ -69,41 +65,36 @@ sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
   }
 
   switch (addr->sa_family) {
-    case AF_INET:
-      if (portstr &&
-          (((const struct sockaddr_in *)addr)->sin_port != port))
-        return -1;
-
-      if (ipstr &&
-          ((inet_pton(addr->sa_family, ipstr, &in) != 1) ||
-           ((const struct sockaddr_in *)addr)->sin_addr.s_addr != in.s_addr))
-        return -1;
-
-      break;
-
-    case AF_INET6:
-      if (portstr &&
-          (((const struct sockaddr_in6 *)addr)->sin6_port != port))
-        return -1;
-
-      if (ipstr &&
-          ((inet_pton(addr->sa_family, ipstr, &in6) != 1) ||
-           (!(IN6_ARE_ADDR_EQUAL(&((const struct sockaddr_in6 *)addr)->sin6_addr,
-                                 &in6)))))
-        return -1;
-
-      break;
-
-    default:
+  case AF_INET:
+    if (portstr && (((const struct sockaddr_in *)addr)->sin_port != port))
       return -1;
+
+    if (ipstr &&
+        ((inet_pton(addr->sa_family, ipstr, &in) != 1) ||
+         ((const struct sockaddr_in *)addr)->sin_addr.s_addr != in.s_addr))
+      return -1;
+
+    break;
+
+  case AF_INET6:
+    if (portstr && (((const struct sockaddr_in6 *)addr)->sin6_port != port))
+      return -1;
+
+    if (ipstr && ((inet_pton(addr->sa_family, ipstr, &in6) != 1) ||
+                  (!(IN6_ARE_ADDR_EQUAL(
+                      &((const struct sockaddr_in6 *)addr)->sin6_addr, &in6)))))
+      return -1;
+
+    break;
+
+  default:
+    return -1;
   }
 
   return 0;
 }
 
-  int
-bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
-{
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
   int enable = 1;
   int oerrno = errno;
   char *ip;
@@ -120,19 +111,19 @@ bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
     if (ops) {
       op = atoi(ops);
       if (op < LIBREUSEPORT_REUSEPORT || op >= LIBREUSEPORT_MAX)
-          op = LIBREUSEPORT_REUSEPORT;
+        op = LIBREUSEPORT_REUSEPORT;
     }
 
     if (!(op & LIBREUSEPORT_REUSEPORT)) {
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable,
-                    sizeof(enable)) < 0)
-            (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable,
+                     sizeof(enable)) < 0)
+        (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
     }
 
     if (!(op & LIBREUSEPORT_REUSEADDR)) {
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable,
-                    sizeof(enable)) < 0)
-            (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
+      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable,
+                     sizeof(enable)) < 0)
+        (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
     }
 
     errno = oerrno;
