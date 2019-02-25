@@ -55,13 +55,13 @@ int sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
             socklen_t addrlen) {
   struct in_addr in;
   struct in6_addr in6;
-  int port;
+  uint16_t port;
 
   if (portstr) {
-    port = atoi(portstr);
-    if (port < 0 || port >= UINT16_MAX)
+    int n = atoi(portstr);
+    if (n < 0 || n >= UINT16_MAX)
       return -1;
-    port = ntohs(port);
+    port = ntohs((uint16_t)n);
   }
 
   switch (addr->sa_family) {
