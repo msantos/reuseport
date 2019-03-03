@@ -37,52 +37,73 @@ enum {
 
 void _init(void);
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
-            socklen_t addrlen);
+int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+char *env_addr;
+uint16_t port;
+int op;
 
 void _init(void) {
   const char *err;
 
+  char *env_port;
+  char *env_op;
+
   sys_bind = dlsym(RTLD_NEXT, "bind");
   err = dlerror();
 
-  if (err != NULL)
+  if (err != NULL) {
     (void)fprintf(stderr, "reuseport:dlsym (bind):%s\n", err);
-}
+    return;
+  }
 
-int sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
-            socklen_t addrlen) {
-  struct in_addr in;
-  struct in6_addr in6;
-  uint16_t port;
+  env_addr = getenv("LIBREUSEPORT_ADDR");
+  env_port = getenv("LIBREUSEPORT_PORT");
+  env_op = getenv("LIBREUSEPORT_OP");
 
-  if (portstr) {
-    int n = atoi(portstr);
+  port = 0;
+
+  if (env_port) {
+    int n = atoi(env_port);
     if (n < 0 || n >= UINT16_MAX)
-      return -1;
+      n = 0;
     port = ntohs((uint16_t)n);
   }
 
+  op = LIBREUSEPORT_REUSEPORT;
+
+  if (env_op) {
+    op = atoi(env_op);
+    if (op < LIBREUSEPORT_REUSEPORT || op > LIBREUSEPORT_MAX)
+      op = LIBREUSEPORT_REUSEPORT;
+  }
+}
+
+int sockcmp(const struct sockaddr *addr, socklen_t addrlen) {
+  struct in_addr in;
+  struct in6_addr in6;
+
   switch (addr->sa_family) {
   case AF_INET:
-    if (portstr && (((const struct sockaddr_in *)addr)->sin_port != port))
+    if (port && (((const struct sockaddr_in *)addr)->sin_port != port))
       return -1;
 
-    if (ipstr &&
-        ((inet_pton(addr->sa_family, ipstr, &in) != 1) ||
+    if (env_addr &&
+        ((inet_pton(addr->sa_family, env_addr, &in) != 1) ||
          ((const struct sockaddr_in *)addr)->sin_addr.s_addr != in.s_addr))
       return -1;
 
     break;
 
   case AF_INET6:
-    if (portstr && (((const struct sockaddr_in6 *)addr)->sin6_port != port))
+    if (port && (((const struct sockaddr_in6 *)addr)->sin6_port != port))
       return -1;
 
-    if (ipstr && ((inet_pton(addr->sa_family, ipstr, &in6) != 1) ||
-                  (!(IN6_ARE_ADDR_EQUAL(
-                      &((const struct sockaddr_in6 *)addr)->sin6_addr, &in6)))))
+    if (env_addr &&
+        ((inet_pton(addr->sa_family, env_addr, &in6) != 1) ||
+         (!(IN6_ARE_ADDR_EQUAL(&((const struct sockaddr_in6 *)addr)->sin6_addr,
+                               &in6)))))
       return -1;
 
     break;
@@ -97,30 +118,15 @@ int sockcmp(const char *ipstr, const char *portstr, const struct sockaddr *addr,
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
   int enable = 1;
   int oerrno = errno;
-  char *ip;
-  char *port;
-  char *ops;
-  int op = LIBREUSEPORT_REUSEPORT;
 
-  ip = getenv("LIBREUSEPORT_ADDR");
-  port = getenv("LIBREUSEPORT_PORT");
-  ops = getenv("LIBREUSEPORT_OP");
-
-  if (sockcmp(ip, port, addr, addrlen) == 0) {
-
-    if (ops) {
-      op = atoi(ops);
-      if (op < LIBREUSEPORT_REUSEPORT || op >= LIBREUSEPORT_MAX)
-        op = LIBREUSEPORT_REUSEPORT;
-    }
-
-    if (!(op & LIBREUSEPORT_REUSEPORT)) {
+  if (sockcmp(addr, addrlen) == 0) {
+    if (op & LIBREUSEPORT_REUSEPORT) {
       if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable,
                      sizeof(enable)) < 0)
         (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
     }
 
-    if (!(op & LIBREUSEPORT_REUSEADDR)) {
+    if (op & LIBREUSEPORT_REUSEADDR) {
       if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable,
                      sizeof(enable)) < 0)
         (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
