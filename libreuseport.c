@@ -41,14 +41,29 @@ int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 char *env_addr;
-uint16_t port;
-int op;
+uint16_t port = 0;
+int op = LIBREUSEPORT_REUSEPORT;
 
 void _init(void) {
   const char *err;
-
   char *env_port;
   char *env_op;
+
+  env_addr = getenv("LIBREUSEPORT_ADDR");
+  env_port = getenv("LIBREUSEPORT_PORT");
+  env_op = getenv("LIBREUSEPORT_OP");
+
+  if (env_port) {
+    int n = atoi(env_port);
+    if (n > 0 || n < UINT16_MAX)
+        port = ntohs((uint16_t)n);
+  }
+
+  if (env_op) {
+    op = atoi(env_op);
+    if (op < LIBREUSEPORT_REUSEPORT || op > LIBREUSEPORT_MAX)
+      op = LIBREUSEPORT_REUSEPORT;
+  }
 
   sys_bind = dlsym(RTLD_NEXT, "bind");
   err = dlerror();
@@ -56,27 +71,6 @@ void _init(void) {
   if (err != NULL) {
     (void)fprintf(stderr, "reuseport:dlsym (bind):%s\n", err);
     return;
-  }
-
-  env_addr = getenv("LIBREUSEPORT_ADDR");
-  env_port = getenv("LIBREUSEPORT_PORT");
-  env_op = getenv("LIBREUSEPORT_OP");
-
-  port = 0;
-
-  if (env_port) {
-    int n = atoi(env_port);
-    if (n < 0 || n >= UINT16_MAX)
-      n = 0;
-    port = ntohs((uint16_t)n);
-  }
-
-  op = LIBREUSEPORT_REUSEPORT;
-
-  if (env_op) {
-    op = atoi(env_op);
-    if (op < LIBREUSEPORT_REUSEPORT || op > LIBREUSEPORT_MAX)
-      op = LIBREUSEPORT_REUSEPORT;
   }
 }
 
