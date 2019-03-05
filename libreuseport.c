@@ -113,21 +113,21 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
   int enable = 1;
   int oerrno = errno;
 
-  if (sockcmp(addr, addrlen) == 0) {
-    if (op & LIBREUSEPORT_REUSEPORT) {
-      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable,
-                     sizeof(enable)) < 0)
-        (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
-    }
+  if (sockcmp(addr, addrlen) < 0)
+    goto LIBREUSEPORT_DONE;
 
-    if (op & LIBREUSEPORT_REUSEADDR) {
-      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable,
-                     sizeof(enable)) < 0)
-        (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
-    }
+  if ((op & LIBREUSEPORT_REUSEPORT) &&
+      (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable)) <
+       0))
+    (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
 
-    errno = oerrno;
-  }
+  if ((op & LIBREUSEPORT_REUSEADDR) &&
+      (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) <
+       0))
+    (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
 
+  errno = oerrno;
+
+LIBREUSEPORT_DONE:
   return sys_bind(sockfd, addr, addrlen);
 }
