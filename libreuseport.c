@@ -38,7 +38,9 @@ enum {
 void _init(void);
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
+#pragma GCC diagnostic ignored "-pedantic"
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+#pragma GCC diagnostic warning "-pedantic"
 
 char *env_addr;
 uint16_t port = 0;
@@ -65,7 +67,9 @@ void _init(void) {
       op = LIBREUSEPORT_REUSEPORT;
   }
 
+#pragma GCC diagnostic ignored "-pedantic"
   sys_bind = dlsym(RTLD_NEXT, "bind");
+#pragma GCC diagnostic warning "-pedantic"
   err = dlerror();
 
   if (err != NULL) {
@@ -77,6 +81,8 @@ void _init(void) {
 int sockcmp(const struct sockaddr *addr, socklen_t addrlen) {
   struct in_addr in;
   struct in6_addr in6;
+
+  (void)addrlen;
 
   switch (addr->sa_family) {
   case AF_INET:
