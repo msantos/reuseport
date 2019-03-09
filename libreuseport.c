@@ -45,6 +45,7 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 char *env_addr;
 uint16_t port = 0;
 int op = LIBREUSEPORT_REUSEPORT;
+char *debug;
 
 void _init(void) {
   const char *err;
@@ -54,11 +55,12 @@ void _init(void) {
   env_addr = getenv("LIBREUSEPORT_ADDR");
   env_port = getenv("LIBREUSEPORT_PORT");
   env_op = getenv("LIBREUSEPORT_OP");
+  debug = getenv("LIBREUSEPORT_DEBUG");
 
   if (env_port) {
     int n = atoi(env_port);
     if (n > 0 || n < UINT16_MAX)
-        port = ntohs((uint16_t)n);
+      port = ntohs((uint16_t)n);
   }
 
   if (env_op) {
@@ -124,13 +126,17 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
   if ((op & LIBREUSEPORT_REUSEPORT) &&
       (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable)) <
-       0))
-    (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+       0)) {
+    if (debug)
+      (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+  }
 
   if ((op & LIBREUSEPORT_REUSEADDR) &&
       (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) <
-       0))
-    (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
+       0)) {
+    if (debug)
+      (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
+  }
 
   errno = oerrno;
 

@@ -42,6 +42,11 @@ Environment Variables
         2 : set SO_REUSEADDR
         3 : set SO_REUSEPORT and SO_REUSEADDR
 
+`LIBREUSEPORT_DEBUG`
+: Output errors to stderr
+
+        LIBREUSEPORT_DEBUG="1"
+
 Using
 -----
 
