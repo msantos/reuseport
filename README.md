@@ -8,10 +8,9 @@ The library works by intercepting calls to `bind(2)` using
 `LD_PRELOAD`. Before `bind(2)`ing, `setsockopt(2)` is called with the
 `SO_REUSEPORT` option.
 
-* `libreuseport.c`: intercepts calls to `bind(2)`
-
-Note libreuseport, like all `LD_PRELOAD` wrappers, won't work with
-statically linked programs or programs that directly make syscalls.
+libreuseport requires the program to be dynamically linked. libreuseport
+will not work with statically linked programs or programs that directly
+make syscalls.
 
 Build
 -----
@@ -33,10 +32,10 @@ Environment Variables
 : Set socket option only if the socket matches the specified port
   (default: any port).
 
-        LIBREUSEPORT_ADDR="127.0.0.1"
+        LIBREUSEPORT_PORT="80"
 
 `LIBREUSEPORT_OP`
-: Options to set on matching socket (default: 1):
+: Options to set on matching socket (default: 1 (`SO_REUSEPORT`)):
 
         1 : set SO_REUSEPORT
         2 : set SO_REUSEADDR
