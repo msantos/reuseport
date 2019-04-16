@@ -76,7 +76,6 @@ void _init(void) {
 
   if (err != NULL) {
     (void)fprintf(stderr, "reuseport:dlsym (bind):%s\n", err);
-    return;
   }
 }
 
