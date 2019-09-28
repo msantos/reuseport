@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,9 +39,9 @@ enum {
 void _init(void);
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
-#pragma GCC diagnostic ignored "-pedantic"
+#pragma GCC diagnostic ignored "-Wpedantic"
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-#pragma GCC diagnostic warning "-pedantic"
+#pragma GCC diagnostic warning "-Wpedantic"
 
 char *env_addr;
 uint16_t port = 0;
@@ -69,9 +70,9 @@ void _init(void) {
       op = LIBREUSEPORT_REUSEPORT;
   }
 
-#pragma GCC diagnostic ignored "-pedantic"
+#pragma GCC diagnostic ignored "-Wpedantic"
   sys_bind = dlsym(RTLD_NEXT, "bind");
-#pragma GCC diagnostic warning "-pedantic"
+#pragma GCC diagnostic warning "-Wpedantic"
   err = dlerror();
 
   if (err != NULL) {
