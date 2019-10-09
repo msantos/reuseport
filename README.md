@@ -34,12 +34,19 @@ Environment Variables
 
         LIBREUSEPORT_PORT="80"
 
-`LIBREUSEPORT_OP`
-: Options to set on matching socket (default: 1 (`SO_REUSEPORT`)):
+`SO_REUSEPORT`
+: Enable or disable `SO_REUSEPORT` socket option (default: 1)
 
-        1 : set SO_REUSEPORT
-        2 : set SO_REUSEADDR
-        3 : set SO_REUSEPORT and SO_REUSEADDR
+        0 : disable
+        1 : enable (default)
+        -1 : use system default
+
+`SO_REUSEADDR`
+: Enable or disable `SO_REUSEADDR` socket option (default: -1)
+
+        0 : disable
+        1 : enable
+        -1 : use system default (default)
 
 `LIBREUSEPORT_DEBUG`
 : Output errors to stderr

@@ -30,12 +30,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-enum {
-  LIBREUSEPORT_REUSEPORT = 1,
-  LIBREUSEPORT_REUSEADDR = 2,
-  LIBREUSEPORT_MAX = 3,
-};
-
 void _init(void);
 int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
@@ -45,17 +39,20 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 char *env_addr;
 uint16_t port = 0;
-int op = LIBREUSEPORT_REUSEPORT;
+int so_reuseaddr = -1;
+int so_reuseport = 1;
 char *debug;
 
 void _init(void) {
   const char *err;
   char *env_port;
-  char *env_op;
+  char *env_so_reuseaddr;
+  char *env_so_reuseport;
 
   env_addr = getenv("LIBREUSEPORT_ADDR");
   env_port = getenv("LIBREUSEPORT_PORT");
-  env_op = getenv("LIBREUSEPORT_OP");
+  env_so_reuseaddr = getenv("SO_REUSEADDR");
+  env_so_reuseport = getenv("SO_REUSEPORT");
   debug = getenv("LIBREUSEPORT_DEBUG");
 
   if (env_port) {
@@ -64,11 +61,11 @@ void _init(void) {
       port = ntohs((uint16_t)n);
   }
 
-  if (env_op) {
-    op = atoi(env_op);
-    if (op < LIBREUSEPORT_REUSEPORT || op > LIBREUSEPORT_MAX)
-      op = LIBREUSEPORT_REUSEPORT;
-  }
+  if (env_so_reuseaddr)
+    so_reuseaddr = atoi(env_so_reuseaddr);
+
+  if (env_so_reuseport)
+    so_reuseport = atoi(env_so_reuseport);
 
 #pragma GCC diagnostic ignored "-Wpedantic"
   sys_bind = dlsym(RTLD_NEXT, "bind");
@@ -118,24 +115,23 @@ int sockcmp(const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-  int enable = 1;
   int oerrno = errno;
 
   if (sockcmp(addr, addrlen) < 0)
     goto LIBREUSEPORT_DONE;
 
-  if ((op & LIBREUSEPORT_REUSEPORT) &&
-      (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable)) <
-       0)) {
+  if ((so_reuseport > -1) &&
+      (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &so_reuseport,
+                  sizeof(so_reuseport)) < 0)) {
     if (debug)
-      (void)fprintf(stderr, "reuseport:%s\n", strerror(errno));
+      (void)fprintf(stderr, "libreuseport:SO_REUSEPORT:%s\n", strerror(errno));
   }
 
-  if ((op & LIBREUSEPORT_REUSEADDR) &&
-      (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) <
-       0)) {
+  if ((so_reuseaddr > -1) &&
+      (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr,
+                  sizeof(so_reuseaddr)) < 0)) {
     if (debug)
-      (void)fprintf(stderr, "reuseaddr:%s\n", strerror(errno));
+      (void)fprintf(stderr, "libreuseport:SO_REUSEADDR:%s\n", strerror(errno));
   }
 
   errno = oerrno;
