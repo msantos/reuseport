@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2018-2019 Michael Santos
+ * Copyright (c) 2018-2020 Michael Santos
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,6 +41,9 @@ char *env_addr;
 uint16_t port = 0;
 int so_reuseaddr = -1;
 int so_reuseport = 1;
+#ifdef SO_BINDTODEVICE
+char *so_bindtodevice;
+#endif
 char *debug;
 
 void _init(void) {
@@ -53,6 +56,9 @@ void _init(void) {
   env_port = getenv("LIBREUSEPORT_PORT");
   env_so_reuseaddr = getenv("SO_REUSEADDR");
   env_so_reuseport = getenv("SO_REUSEPORT");
+#ifdef SO_BINDTODEVICE
+  so_bindtodevice = getenv("SO_BINDTODEVICE");
+#endif
   debug = getenv("LIBREUSEPORT_DEBUG");
 
   if (env_port) {
@@ -116,6 +122,14 @@ int sockcmp(const struct sockaddr *addr, socklen_t addrlen) {
 
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
   int oerrno = errno;
+
+#ifdef SO_BINDTODEVICE
+  if (so_bindtodevice && (addr->sa_family == AF_INET || addr->sa_family == AF_INET6)) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, so_bindtodevice,
+                   (socklen_t)strlen(so_bindtodevice)) < 0)
+      return -1;
+  }
+#endif
 
   if (sockcmp(addr, addrlen) < 0)
     goto LIBREUSEPORT_DONE;
