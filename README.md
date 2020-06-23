@@ -48,6 +48,12 @@ Environment Variables
         1 : enable
         -1 : use system default (default)
 
+`SO_BINDTODEVICE`
+: On a system with multiple interfaces, bind the socket to a specific
+  interface (default: disabled)
+
+        SO_BINDTODEVICE="eth0"
+
 `LIBREUSEPORT_DEBUG`
 : Output errors to stderr
 
