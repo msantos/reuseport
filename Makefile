@@ -1,5 +1,4 @@
-.PHONY: all clean
-
+.PHONY: all
 all:
 	$(CC) \
 		$(CFLAGS) \
@@ -11,5 +10,10 @@ all:
 		-o libreuseport.so libreuseport.c -ldl \
 		-Wl,-z,relro,-z,now -Wl,-z,noexecstack
 
+.PHONY: clean
 clean:
 	-@rm libresuseport.so
+
+.PHONY: test
+test:
+	@env LD_LIBRARY_PATH=. bats test
