@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2018-2020 Michael Santos
+ * Copyright (c) 2018-2023 Michael Santos
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,20 +31,20 @@
 #include <sys/types.h>
 
 void _init(void);
-int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
+static int (*sys_bind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+static int sockcmp(const struct sockaddr *addr, socklen_t addrlen);
 #pragma GCC diagnostic ignored "-Wpedantic"
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 #pragma GCC diagnostic warning "-Wpedantic"
 
-char *env_addr;
-uint16_t port = 0;
-int so_reuseaddr = -1;
-int so_reuseport = 1;
+static char *env_addr;
+static uint16_t port = 0;
+static int so_reuseaddr = -1;
+static int so_reuseport = 1;
 #ifdef SO_BINDTODEVICE
-char *so_bindtodevice;
+static char *so_bindtodevice;
 #endif
-char *debug;
+static char *debug;
 
 void _init(void) {
   const char *err;
@@ -83,7 +83,7 @@ void _init(void) {
   }
 }
 
-int sockcmp(const struct sockaddr *addr, socklen_t addrlen) {
+static int sockcmp(const struct sockaddr *addr, socklen_t addrlen) {
   struct in_addr in;
   struct in6_addr in6;
 
