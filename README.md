@@ -1,5 +1,4 @@
-libreuseport
-============
+# libreuseport
 
 libreuseport is a small library for socket load distribution (aka port
 sharding).
@@ -12,59 +11,68 @@ libreuseport requires the program to be dynamically linked. libreuseport
 will not work with statically linked programs or programs that directly
 make syscalls.
 
-Build
------
+## Build
 
-~~~
+```
 make
-~~~
+```
 
-Environment Variables
----------------------
+## Environment Variables
 
 `LIBREUSEPORT_ADDR`
 : Set socket option only if the socket matches the specified IPv4 or
-  IPv6 address (default: any address).
+IPv6 address (default: any address).
 
-        LIBREUSEPORT_ADDR="127.0.0.1"
+```
+    LIBREUSEPORT_ADDR="127.0.0.1"
+```
 
 `LIBREUSEPORT_PORT`
 : Set socket option only if the socket matches the specified port
-  (default: any port).
+(default: any port).
 
-        LIBREUSEPORT_PORT="80"
+```
+    LIBREUSEPORT_PORT="80"
+```
 
 `SO_REUSEPORT`
 : Enable or disable `SO_REUSEPORT` socket option (default: 1)
 
-        0 : disable
-        1 : enable (default)
-        -1 : use system default
+```
+    0 : disable
+    1 : enable (default)
+    -1 : use system default
+```
 
 `SO_REUSEADDR`
 : Enable or disable `SO_REUSEADDR` socket option (default: -1)
 
-        0 : disable
-        1 : enable
-        -1 : use system default (default)
+```
+    0 : disable
+    1 : enable
+    -1 : use system default (default)
+```
 
 `SO_BINDTODEVICE`
 : On a system with multiple interfaces, bind the socket to a specific
-  interface (default: disabled)
+interface (default: disabled)
 
-        SO_BINDTODEVICE="eth0"
+```
+    SO_BINDTODEVICE="eth0"
+```
 
 `LIBREUSEPORT_DEBUG`
 : Output errors to stderr
 
-        LIBREUSEPORT_DEBUG="1"
+```
+    LIBREUSEPORT_DEBUG="1"
+```
 
-Using
------
+## Using
 
 * netcat
 
-~~~
+```
 # run in a shell
 LD_PRELOAD=./libreuseport.so nc -k -l 9090
 
@@ -73,11 +81,11 @@ LD_PRELOAD=./libreuseport.so nc -k -l 9090
 
 # yet another shell
 X=0; while :; do X=$((X+1)); echo "test:$X" | nc localhost 9090; done
-~~~
+```
 
 * erlang
 
-~~~ erlang
+```erlang
 $ LD_PRELOAD=./libreuseport.so erl
 
 1> {ok, L1} = gen_tcp:listen(5678, [binary, {packet,0}, {active,true}]).
@@ -110,15 +118,14 @@ $ LD_PRELOAD=./libreuseport.so erl
 {listen,#Port<0.7>}->{socket,#Port<0.20>}
 {listen,#Port<0.7>}->{socket,#Port<0.21>}
 {listen,#Port<0.7>}->{socket,#Port<0.22>}
-~~~
+```
 
-See Also
---------
+## See Also
 
 * Using `LD_PRELOAD` to bind an application to an interface:
 
-    https://gist.github.com/markusfisch/51b1ce6c3ca9ce67e081
+  https://gist.github.com/markusfisch/51b1ce6c3ca9ce67e081
 
 * Linux port sharding demo
 
-    https://github.com/joewalnes/port-sharding
+  https://github.com/joewalnes/port-sharding
