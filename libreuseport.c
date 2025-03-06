@@ -79,7 +79,7 @@ void _init(void) {
   err = dlerror();
 
   if (err != NULL) {
-    (void)fprintf(stderr, "reuseport:dlsym (bind):%s\n", err);
+    (void)fprintf(stderr, "libreuseport:dlsym (bind):%s\n", err);
   }
 }
 
