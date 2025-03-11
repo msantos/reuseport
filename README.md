@@ -70,17 +70,17 @@ interface (default: disabled)
 
 ## Using
 
-* netcat
+* python HTTP server
 
 ```
 # run in a shell
-LD_PRELOAD=./libreuseport.so nc -k -l 9090
+$ LD_PRELOAD=./libreuseport.so python3 -m http.server 8000
 
 # in another shell
-LD_PRELOAD=./libreuseport.so nc -k -l 9090
+$ LD_PRELOAD=./libreuseport.so python3 -m http.server 8000
 
 # yet another shell
-X=0; while :; do X=$((X+1)); echo "test:$X" | nc localhost 9090; done
+while :; do curl http://0.0.0.0:8000; sleep 1; done
 ```
 
 * erlang
